@@ -2,6 +2,10 @@
 
 Need the quick path? See the [main README](../README.md).
 
+## 📱 Mobile (iOS / Android)
+
+Use the **easygithubinstall** web app: [easygithubinstall.stump-vinyl.workers.dev](https://easygithubinstall.stump-vinyl.workers.dev) (demo) or [easygithubinstall.ipo-hunter.workers.dev](https://easygithubinstall.ipo-hunter.workers.dev) (your Cloudflare account after `cd web/easygithubinstall && npm run deploy`). Paste the GitHub URL on your phone, open the handoff page (QR), then run the printed `gh-install` command on your desktop. The site validates URLs only; it does not install into phone apps. Build and deploy: [`web/easygithubinstall/README.md`](../web/easygithubinstall/README.md).
+
 ## ❌ Python or git not found
 
 Run `setup.cmd` once. It checks both tools and prints download links.

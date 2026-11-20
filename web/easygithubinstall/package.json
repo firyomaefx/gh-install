@@ -1,0 +1,19 @@
+{
+  "name": "easygithubinstall",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Easy GitHub Install — mobile web handoff for gh-install",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "qrcode": "^1.5.4"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261118.1",
+    "typescript": "^5.8.2",
+    "wrangler": "^4.14.0"
+  }
+}
