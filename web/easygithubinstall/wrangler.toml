@@ -1,0 +1,16 @@
+name = "easygithubinstall"
+main = "worker/index.ts"
+compatibility_date = "2025-03-01"
+account_id = "34e60dd0757bb4d3e17625faa78f715d"
+
+[observability]
+enabled = true
+
+[observability.traces]
+enabled = true
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+html_handling = "auto-trailing-slash"

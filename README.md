@@ -1,5 +1,7 @@
 # gh-install — GitHub plugin & skill installer (no AI tokens)
 
+Also known as **easygithubinstall** — use the [mobile web handoff](web/easygithubinstall/README.md) on iPhone/Android to paste a link and get a QR/command for your desktop.
+
 **Paste a public GitHub link** and install **plugins**, **skills**, or **MCP servers** into **Claude Desktop**, **Grok**, **DeepSeek Harness**, or **ChatGPT**—without burning tokens in chat. This Windows CLI shallow-clones the repo and copies files using **manifest names only** (`SKILL.md`, `plugin.json`, `mcp.json`).
 
 | Repo | Link |
@@ -19,6 +21,12 @@
 | **Do not run** | Inside Claude, Grok, ChatGPT, or DeepSeek chat windows | Use a real terminal instead |
 
 See exact disk paths: `gh-install --where`
+
+---
+
+## 📱 Use on your phone
+
+Open **Easy GitHub Install** on iOS or Android: [easygithubinstall.stump-vinyl.workers.dev](https://easygithubinstall.stump-vinyl.workers.dev) (demo) or [easygithubinstall.ipo-hunter.workers.dev](https://easygithubinstall.ipo-hunter.workers.dev) (your account). Paste your GitHub URL, then scan the QR or copy `gh-install "…"` on your computer. Redeploy: `cd web/easygithubinstall && npm run deploy` (requires `wrangler login` or `CLOUDFLARE_API_TOKEN`).
 
 ---
 

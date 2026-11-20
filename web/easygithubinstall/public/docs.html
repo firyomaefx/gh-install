@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Docs — Easy GitHub Install</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <a href="/">← Home</a>
+        <h1>Docs</h1>
+        <p class="lead">Mobile web validates URLs only. Installing still happens with <strong>gh-install</strong> on your computer.</p>
+      </header>
+
+      <article class="card steps">
+        <h2 style="margin-top: 0">Zero LLM tokens</h2>
+        <p>
+          This site and <code>gh-install</code> never send repository source to a chat model. The CLI shallow-clones
+          with git and copies manifest files by filename. See
+          <a href="https://github.com/firyomaefx/gh-install/blob/main/docs/VERIFY.md">VERIFY.md</a> on GitHub.
+        </p>
+
+        <h2>First-time setup (desktop)</h2>
+        <ol>
+          <li>Clone <a href="https://github.com/firyomaefx/gh-install">gh-install</a></li>
+          <li>Windows: <code>setup.cmd</code> — Mac/Linux: <code>chmod +x setup.sh &amp;&amp; ./setup.sh</code></li>
+          <li><code>gh-install --scan</code> (or <code>python3 gh-install.py --scan</code>)</li>
+        </ol>
+
+        <h2>Allowed GitHub URLs</h2>
+        <ul>
+          <li><code>https://github.com/owner/repo</code></li>
+          <li>Optional <code>/tree/ref/path</code> or <code>/blob/ref/file</code></li>
+        </ul>
+
+        <h2>Troubleshooting</h2>
+        <p>Full guide: <a href="https://github.com/firyomaefx/gh-install/blob/main/docs/INSTALL.md">INSTALL.md</a></p>
+      </article>
+
+      <nav class="footer-nav">
+        <a href="/hosts.html">Supported hosts</a>
+        <a href="https://github.com/firyomaefx/gh-install">GitHub repo</a>
+      </nav>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0969da" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Easy GitHub Install" />
+    <title>Easy GitHub Install — paste a link, install on desktop</title>
+    <meta
+      name="description"
+      content="Paste a GitHub plugin, skill, or MCP link on your phone. Hand off to your PC or Mac and run gh-install with zero LLM tokens."
+    />
+    <meta property="og:title" content="Easy GitHub Install" />
+    <meta
+      property="og:description"
+      content="Mobile-friendly paste-and-go for gh-install — Claude, Grok, DeepSeek, ChatGPT desktop."
+    />
+    <meta property="og:type" content="website" />
+    <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/icon-192.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <span class="badge">easygithubinstall</span>
+        <h1>Paste a GitHub link</h1>
+        <p class="lead">Install plugins, skills, and MCP servers on your <strong>desktop</strong> AI apps—without burning tokens in chat.</p>
+      </header>
+
+      <section class="card hero-steps" aria-label="How it works">
+        <div class="hero-step">
+          <span class="num" aria-hidden="true">1</span>
+          <div>Paste your public GitHub URL here (iPhone or Android).</div>
+        </div>
+        <div class="hero-step">
+          <span class="num" aria-hidden="true">2</span>
+          <div>Scan the QR or copy the command for your computer.</div>
+        </div>
+        <div class="hero-step">
+          <span class="num" aria-hidden="true">3</span>
+          <div>Run <code>gh-install</code> in a terminal—git clone, no LLM.</div>
+        </div>
+      </section>
+
+      <form id="paste-form" class="card">
+        <label for="repo-url">GitHub URL</label>
+        <input
+          id="repo-url"
+          name="url"
+          type="url"
+          inputmode="url"
+          autocomplete="off"
+          autocapitalize="off"
+          spellcheck="false"
+          placeholder="https://github.com/owner/repo"
+          required
+        />
+        <p class="device-pill" id="device-label"></p>
+        <p id="form-error" class="error" role="alert"></p>
+        <div class="row">
+          <button type="button" class="secondary" id="paste-clipboard">Paste from clipboard</button>
+          <button type="submit" class="primary">Validate &amp; get command</button>
+        </div>
+      </form>
+
+      <section id="result" class="card hidden" aria-live="polite">
+        <p><strong id="repo-name"></strong></p>
+        <p id="repo-desc" class="lead hidden"></p>
+        <p>Install command:</p>
+        <pre id="install-cmd" class="mono"></pre>
+        <div class="row">
+          <button type="button" class="secondary" id="copy-cmd">Copy command</button>
+          <button type="button" class="secondary" id="copy-url">Copy URL</button>
+          <a id="open-go" class="btn primary" href="/go">Open handoff (QR)</a>
+        </div>
+      </section>
+
+      <section id="mobile-handoff" class="card steps">
+        <h2 style="margin-top: 0; font-size: 1.1rem">On your phone</h2>
+        <p>Use <strong>Open handoff</strong> for a big QR code your computer can scan, or tap <strong>Share</strong> to send yourself the command.</p>
+        <button type="button" class="primary" id="share-handoff" style="width: 100%">Share handoff</button>
+      </section>
+
+      <section id="desktop-hint" class="card steps hidden">
+        <h2 style="margin-top: 0; font-size: 1.1rem">One-time setup</h2>
+        <ol>
+          <li><a href="https://github.com/firyomaefx/gh-install">Clone gh-install</a></li>
+          <li>Run <code>setup.cmd</code> or <code>./setup.sh</code></li>
+          <li>Run <code>gh-install --scan</code></li>
+        </ol>
+      </section>
+
+      <nav class="footer-nav">
+        <a href="/docs.html">Docs</a>
+        <a href="/hosts.html">Hosts</a>
+        <a href="https://github.com/firyomaefx/gh-install">gh-install on GitHub</a>
+      </nav>
+    </div>
+    <script type="module">
+      import { setupPastePage } from "/app.js";
+      setupPastePage(document);
+    </script>
+  </body>
+</html>

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0969da" />
+    <title>Hand off to desktop — Easy GitHub Install</title>
+    <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <a href="/">← Back</a>
+        <h1>Hand off to your computer</h1>
+        <p class="lead">Scan this QR on another device, or copy the install command.</p>
+      </header>
+
+      <p id="go-error" class="error" role="alert"></p>
+
+      <section id="go-content" class="hidden">
+        <div class="card qr-wrap">
+          <img id="qr-image" width="280" height="280" alt="" />
+        </div>
+
+        <div class="card">
+          <p>Install command:</p>
+          <pre id="install-cmd" class="mono"></pre>
+          <div class="row">
+            <button type="button" class="primary" id="copy-cmd">Copy command</button>
+            <button type="button" class="secondary" id="copy-url">Copy GitHub URL</button>
+          </div>
+        </div>
+
+        <section class="card steps">
+          <h2 style="margin-top: 0; font-size: 1.1rem">Setup steps</h2>
+          <div class="tabs" role="tablist">
+            <button type="button" class="tab active" data-platform="windows" role="tab">Windows</button>
+            <button type="button" class="tab" data-platform="mac" role="tab">Mac</button>
+            <button type="button" class="tab" data-platform="linux" role="tab">Linux</button>
+          </div>
+          <ol id="platform-steps"></ol>
+        </section>
+      </section>
+
+      <nav class="footer-nav">
+        <a href="/">Home</a>
+        <a href="/docs.html">Docs</a>
+      </nav>
+    </div>
+    <script type="module">
+      import { setupGoPage } from "/app.js";
+      setupGoPage(document);
+    </script>
+  </body>
+</html>
