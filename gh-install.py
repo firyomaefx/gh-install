@@ -25,8 +25,35 @@ CONFIG_PATH = TOOL_DIR / "hosts.json"
 EXAMPLE_PATH = TOOL_DIR / "hosts.example.json"
 HOSTS = ("deepseek", "claude", "grok", "chatgpt")
 PATH_KEYS = ("plugins", "skills", "mcp_config", "profile_package")
+HOST_MENU = (
+    ("deepseek", "1", "DeepSeek Harness", "🐋"),
+    ("claude", "2", "Claude Desktop", "🟤"),
+    ("grok", "3", "Grok", "⚡"),
+    ("chatgpt", "4", "ChatGPT desktop", "💬"),
+)
+RESTART_HINTS = {
+    "deepseek": "Restart DeepSeek Harness (or reload workspace) to pick up new plugins/skills.",
+    "claude": "Quit and reopen Claude Desktop to load skills, plugins, or MCP servers.",
+    "grok": "Restart Grok to load plugins, skills, or MCP servers.",
+    "chatgpt": "Restart the ChatGPT desktop app to load new files.",
+}
 NAME_RE = re.compile(r"^[A-Za-z0-9_.-]+$")
 REF_RE = re.compile(r"^[A-Za-z0-9._~+-]+$")
+
+def platform_key() -> str:
+    if sys.platform == "win32":
+        return "windows"
+    if sys.platform == "darwin":
+        return "darwin"
+    return "linux"
+
+
+PROBE_KEYS: dict[str, tuple[str, ...]] = {
+    "deepseek": ("profile_package", "plugins", "skills"),
+    "claude": ("mcp_config", "skills", "plugins"),
+    "grok": ("mcp_config", "plugins", "skills"),
+    "chatgpt": ("mcp_config", "plugins"),
+}
 
 DEFAULT_HOSTS = {
     "version": 1,
@@ -40,10 +67,10 @@ DEFAULT_HOSTS = {
             "why": "Edit paths after you install DeepSeek Harness.",
         },
         "claude": {
-            "found": True,
-            "plugins": r"C:\Users\User\.claude\plugins\local",
-            "skills": r"C:\Users\User\.claude\skills",
-            "mcp_config": r"C:\Users\User\AppData\Roaming\Claude\claude_desktop_config.json",
+            "found": False,
+            "plugins": r"%USERPROFILE%\.claude\plugins\local",
+            "skills": r"%USERPROFILE%\.claude\skills",
+            "mcp_config": r"%APPDATA%\Claude\claude_desktop_config.json",
             "mcp_format": "json",
             "why": (
                 "Claude Desktop is installed. claude_desktop_config.json already "
@@ -53,10 +80,10 @@ DEFAULT_HOSTS = {
             ),
         },
         "grok": {
-            "found": True,
-            "plugins": r"C:\Users\User\.grok\installed-plugins",
-            "skills": r"C:\Users\User\.grok\skills",
-            "mcp_config": r"C:\Users\User\.grok\config.toml",
+            "found": False,
+            "plugins": r"%USERPROFILE%\.grok\installed-plugins",
+            "skills": r"%USERPROFILE%\.grok\skills",
+            "mcp_config": r"%USERPROFILE%\.grok\config.toml",
             "mcp_format": "toml",
             "why": (
                 "Grok is installed. Local plugins already live in "
@@ -92,11 +119,78 @@ def expand_config_paths(hosts: dict) -> None:
                 cfg[key] = os.path.expandvars(value)
 
 
+def read_example_raw() -> dict:
+    if not EXAMPLE_PATH.exists():
+        return DEFAULT_HOSTS
+    data = json.loads(EXAMPLE_PATH.read_text(encoding="utf-8"))
+    if data.get("version") == 2 and isinstance(data.get("platforms"), dict):
+        plat = platform_key()
+        block = data["platforms"].get(plat) or data["platforms"].get("linux")
+        if isinstance(block, dict) and isinstance(block.get("hosts"), dict):
+            return {"version": 2, "hosts": block["hosts"]}
+    if isinstance(data.get("hosts"), dict):
+        return data
+    return DEFAULT_HOSTS
+
+
+def write_hosts_file(hosts: dict) -> None:
+    payload = {"version": 2, "platform": platform_key(), "hosts": hosts}
+    CONFIG_PATH.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+
+
 def seed_config() -> None:
-    if EXAMPLE_PATH.exists():
-        shutil.copy(EXAMPLE_PATH, CONFIG_PATH)
-        return
-    CONFIG_PATH.write_text(json.dumps(DEFAULT_HOSTS, indent=2) + "\n", encoding="utf-8")
+    data = read_example_raw()
+    hosts = data.get("hosts", data)
+    if not isinstance(hosts, dict):
+        hosts = DEFAULT_HOSTS["hosts"]
+    write_hosts_file(dict(hosts))
+
+
+def probe_host(host: str, cfg: dict) -> bool:
+    for key in PROBE_KEYS.get(host, ("mcp_config", "plugins", "skills")):
+        value = cfg.get(key)
+        if not value or not isinstance(value, str):
+            continue
+        path = Path(value)
+        if path.is_file():
+            return True
+        if path.exists():
+            return True
+        if key in ("skills", "plugins") and path.parent.exists():
+            return True
+    if host == "claude" and cfg.get("skills"):
+        claude_home = Path(cfg["skills"]).parent
+        if claude_home.exists():
+            return True
+    if host == "grok" and cfg.get("mcp_config"):
+        grok_home = Path(cfg["mcp_config"]).parent
+        if grok_home.exists():
+            return True
+    return False
+
+
+def scan_hosts(hosts: dict, *, write: bool = True) -> dict[str, bool]:
+    plat = platform_key()
+    print(f"platform: {plat}")
+    results: dict[str, bool] = {}
+    for host in HOSTS:
+        found = probe_host(host, hosts[host])
+        hosts[host]["found"] = found
+        results[host] = found
+        emoji = next((e for k, _n, _l, e in HOST_MENU if k == host), "")
+        label = next((l for k, _n, l, _e in HOST_MENU if k == host), host)
+        status = "found" if found else "not detected"
+        print(f"{emoji} {label} ({host}): {status}")
+    if write:
+        write_hosts_file(hosts)
+        print(f"updated: {CONFIG_PATH}")
+    missing = [h for h, ok in results.items() if not ok]
+    if missing:
+        print(
+            "tip: missing apps can still be targeted with --host; "
+            "edit hosts.json paths if your install location differs."
+        )
+    return results
 
 
 def load_config() -> dict:
@@ -106,6 +200,13 @@ def load_config() -> dict:
     hosts = data.get("hosts")
     if not isinstance(hosts, dict) or any(name not in hosts for name in HOSTS):
         raise InstallError(f"host config is missing a host: {CONFIG_PATH}")
+    stored_plat = data.get("platform")
+    current = platform_key()
+    if stored_plat and stored_plat != current:
+        print(
+            f"note: hosts.json was written on {stored_plat}; "
+            f"re-run gh-install --scan on {current} if paths look wrong."
+        )
     expand_config_paths(hosts)
     return hosts
 
@@ -663,6 +764,121 @@ def source_from_clone(clone_dir: Path, parsed: dict) -> Path:
     return candidate
 
 
+def stdin_is_tty() -> bool:
+    try:
+        return sys.stdin.isatty()
+    except (AttributeError, ValueError):
+        return False
+
+
+def _confirm_undetected(host: str, hosts: dict) -> bool:
+    if hosts.get(host, {}).get("found"):
+        return True
+    print(f"warning: {host} was not detected on this PC.")
+    try:
+        ok = input("Install there anyway? [y/N]: ").strip().lower()
+    except EOFError:
+        raise InstallError("host is required (use --host)") from None
+    return ok in {"y", "yes"}
+
+
+def pick_host_interactive(hosts: dict, *, show_all: bool = False) -> str:
+    detected = [
+        (key, num, label, emoji)
+        for key, num, label, emoji in HOST_MENU
+        if hosts.get(key, {}).get("found")
+    ]
+    print("Pick where to install:")
+    if not any(hosts.get(k, {}).get("found") for k in HOSTS):
+        print("  (no apps detected — run: gh-install --scan)")
+    options: list[tuple[str, str, str, str]] = []
+    use_detected_only = bool(detected) and not show_all
+    if use_detected_only:
+        for index, (key, _num, label, emoji) in enumerate(detected, start=1):
+            options.append((str(index), key, label, emoji))
+            print(f"  {index}. {emoji} {label} ({key})")
+        print("  a. Show all hosts (including not detected)")
+    else:
+        for key, num, label, emoji in HOST_MENU:
+            options.append((num, key, label, emoji))
+            flag = "" if hosts.get(key, {}).get("found") else " [not detected]"
+            print(f"  {num}. {emoji} {label} ({key}){flag}")
+    while True:
+        try:
+            choice = input("Host: ").strip().lower()
+        except EOFError:
+            raise InstallError("host is required (use --host in scripts)") from None
+        if not choice:
+            continue
+        if use_detected_only and choice in {"a", "all"}:
+            return pick_host_interactive(hosts, show_all=True)
+        for num, key, _label, _emoji in options:
+            if choice == num or choice == key:
+                if not _confirm_undetected(key, hosts):
+                    continue
+                return key
+        print("Pick a menu number, a host name, or 'a' for all hosts.")
+
+
+def print_where(hosts: dict) -> None:
+    term = {
+        "windows": "PowerShell, cmd, or Windows Terminal",
+        "darwin": "Terminal.app, iTerm, or Warp",
+        "linux": "your desktop terminal",
+    }.get(platform_key(), "a terminal")
+    print(f"Run gh-install from: any {term}")
+    print(f"Tool folder: {TOOL_DIR}")
+    print(f"Config file: {CONFIG_PATH}")
+    print()
+    for key, num, label, emoji in HOST_MENU:
+        cfg = hosts.get(key, {})
+        found = cfg.get("found")
+        tag = " [detected]" if found else " [not detected]" if found is False else ""
+        print(f"{emoji} {label} ({key}){tag}")
+        for path_key in ("plugins", "skills", "mcp_config", "profile_package"):
+            value = cfg.get(path_key)
+            if value:
+                print(f"   {path_key}: {value}")
+        why = cfg.get("why")
+        if why:
+            print(f"   note: {why}")
+        print()
+
+
+def print_help_hosts(hosts: dict) -> None:
+    kinds = {
+        "deepseek": "plugins (plugin.json / cordis.patch.yml), skills (SKILL.md), profile link",
+        "claude": "skills, plugin trees, MCP (mcp.json merge)",
+        "grok": "plugins, skills, MCP (config.toml merge)",
+        "chatgpt": "plugins, skills, MCP (JSON merge)",
+    }
+    for key, _num, label, emoji in HOST_MENU:
+        cfg = hosts[key]
+        print(f"{emoji} {label}")
+        print(f"   Installs: {kinds[key]}")
+        for path_key in ("plugins", "skills", "mcp_config"):
+            value = cfg.get(path_key)
+            if value:
+                print(f"   {path_key}: {value}")
+        print(f"   After install: {RESTART_HINTS[key]}")
+        print()
+
+
+def print_post_summary(host: str, actions: list[dict], dry_run: bool) -> None:
+    if dry_run:
+        return
+    dests = []
+    for action in actions:
+        dest = action.get("dest")
+        if dest is not None:
+            dests.append(str(dest))
+    if dests:
+        print("Installed to:")
+        for line in dests:
+            print(f"  {line}")
+    print(f"Tip: {RESTART_HINTS.get(host, 'Restart the app to load changes.')}")
+
+
 def install_url(url: str, host: str, host_cfg: dict, replace: bool, dry_run: bool) -> None:
     local = Path(url)
     if local.is_dir():
@@ -675,6 +891,7 @@ def install_url(url: str, host: str, host_cfg: dict, replace: bool, dry_run: boo
         print(f"kind: {kind_label(actions)}")
         for action in actions:
             apply_action(action, replace, dry_run)
+        print_post_summary(host, actions, dry_run)
         return
 
     parsed = parse_github_url(url)
@@ -689,16 +906,39 @@ def install_url(url: str, host: str, host_cfg: dict, replace: bool, dry_run: boo
         print(f"kind: {kind_label(actions)}")
         for action in actions:
             apply_action(action, replace, dry_run)
+        print_post_summary(host, actions, dry_run)
     finally:
         shutil.rmtree(parent, ignore_errors=True)
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="gh-install")
-    parser.add_argument("--host", required=True, choices=HOSTS)
+    parser = argparse.ArgumentParser(
+        prog="gh-install",
+        description="Install a public GitHub repo into DeepSeek, Claude, Grok, or ChatGPT.",
+    )
+    parser.add_argument(
+        "--host",
+        choices=HOSTS,
+        help="target app (menu if omitted on an interactive terminal)",
+    )
+    parser.add_argument(
+        "--where",
+        action="store_true",
+        help="show folders where each host stores plugins/skills/MCP",
+    )
+    parser.add_argument(
+        "--help-hosts",
+        action="store_true",
+        help="describe each host and install destinations",
+    )
+    parser.add_argument(
+        "--scan",
+        action="store_true",
+        help="detect installed desktop apps and update hosts.json (no LLM, local paths only)",
+    )
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--replace", action="store_true")
-    parser.add_argument("urls", nargs="+")
+    parser.add_argument("urls", nargs="*", help="one or more github.com URLs")
     return parser
 
 
@@ -710,10 +950,35 @@ def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     try:
         hosts = load_config()
-        host_cfg = hosts[args.host]
-        print(f"host: {args.host}")
+        if args.where:
+            print_where(hosts)
+            return 0
+        if args.help_hosts:
+            print_help_hosts(hosts)
+            return 0
+        if args.scan:
+            scan_hosts(hosts)
+            return 0
+        host = args.host
+        if not host:
+            if stdin_is_tty():
+                host = pick_host_interactive(hosts)
+            else:
+                raise InstallError(
+                    "--host is required when stdin is not a terminal (script/CI mode)"
+                )
+        if not args.urls:
+            raise InstallError("at least one GitHub URL is required")
+        host_cfg = hosts[host]
+        if not host_cfg.get("found"):
+            print(
+                f"warning: {host} was not detected on this machine "
+                "(run gh-install --scan or edit hosts.json)."
+            )
+        emoji = next((e for k, _n, _l, e in HOST_MENU if k == host), "")
+        print(f"host: {host} {emoji}".rstrip())
         for url in args.urls:
-            install_url(url, args.host, host_cfg, args.replace, args.dry_run)
+            install_url(url, host, host_cfg, args.replace, args.dry_run)
     except InstallError as exc:
         print(str(exc), file=sys.stderr)
         return exc.code

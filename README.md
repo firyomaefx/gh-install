@@ -1,97 +1,158 @@
-# gh-install
+# gh-install — GitHub plugin & skill installer (no AI tokens)
 
-Paste a public **GitHub URL** and install plugins, skills, or MCP configs into **DeepSeek Harness**, **Claude Desktop**, **Grok**, or **ChatGPT**—with **no AI model in the loop**. The tool shallow-clones the repo and copies files using manifest names only, so you do not spend tokens asking a chatbot to “install this repo.”
+**Paste a public GitHub link** and install **plugins**, **skills**, or **MCP servers** into **Claude Desktop**, **Grok**, **DeepSeek Harness**, or **ChatGPT**—without burning tokens in chat. This Windows CLI shallow-clones the repo and copies files using **manifest names only** (`SKILL.md`, `plugin.json`, `mcp.json`).
 
-## Quick start
+| Repo | Link |
+|------|------|
+| GitHub | https://github.com/firyomaefx/gh-install |
+| Cursor Origin | https://origin.cursor.com/ttrg/gh-install |
 
-1. Install **Python 3** and **git** on your PATH.
-2. Clone this repository (or copy the folder) and run:
+---
 
-   ```bat
-   gh-install.cmd --dry-run --host claude https://github.com/anthropics/skills/tree/main/skills/skill-creator
-   ```
+## 📍 Run where?
 
-3. If the preview looks right, install:
+| Step | **Where you run it** | Example |
+|------|----------------------|---------|
+| **One-time setup** | Inside the cloned `gh-install` folder | Double-click `setup.cmd` or `setup.cmd` in cmd |
+| **Install a repo** | Any **PowerShell**, **cmd**, or **Windows Terminal** (after PATH) | `gh-install https://github.com/org/repo` |
+| **From repo folder** | Same folder as `gh-install.cmd` | `gh-install.cmd --host claude <url>` |
+| **Do not run** | Inside Claude, Grok, ChatGPT, or DeepSeek chat windows | Use a real terminal instead |
 
-   ```bat
-   gh-install.cmd --host claude https://github.com/anthropics/skills/tree/main/skills/skill-creator
-   ```
+See exact disk paths: `gh-install --where`
 
-4. On first run, `hosts.json` is created from `hosts.example.json`. Edit paths if your apps live elsewhere.
+---
 
-Optional: add the folder containing `gh-install.cmd` to your user `PATH` so you can run `gh-install` from any terminal.
-
-### One-liners per host
+## ⚡ Paste-and-go flow (no AI tokens)
 
 ```bat
-gh-install --host deepseek https://github.com/org/harness-plugin
-gh-install --host claude     https://github.com/org/skill-repo
-gh-install --host grok       https://github.com/org/grok-plugin
-gh-install --host chatgpt    https://github.com/org/chatgpt-plugin
+git clone https://github.com/firyomaefx/gh-install.git
+cd gh-install
+setup.cmd          :: Windows
+# ./setup.sh       :: macOS / Linux (chmod +x setup.sh first)
 ```
 
-## Supported hosts
+**`setup` runs `gh-install --scan`** — checks your disk for Claude, Grok, DeepSeek, and ChatGPT desktop folders. **No chat model is called.**
 
-| Host | What it installs | Typical folders (Windows) |
-|------|------------------|-------------------------|
-| `deepseek` | Harness **plugins** (tree with `plugin.json` / marker), **skills** (`SKILL.md`), optional profile link | Plugins: `%USERPROFILE%\Documents\deepseek-harness\default-workspace\plugins`; skills: `%USERPROFILE%\.agents\skills` |
-| `claude` | **Skills** (`SKILL.md`), **plugin** trees (`.cursor-plugin/plugin.json`), **MCP** (`mcp.json` merged into config) | Skills: `%USERPROFILE%\.claude\skills`; MCP: `%APPDATA%\Claude\claude_desktop_config.json` |
-| `grok` | **Plugins**, **skills**, **MCP** (TOML merge) | `%USERPROFILE%\.grok\installed-plugins`, `%USERPROFILE%\.grok\skills`, `%USERPROFILE%\.grok\config.toml` |
-| `chatgpt` | **Plugins**, **skills**, **MCP** (documented defaults) | `%APPDATA%\ChatGPT\plugins` (only if the desktop app is installed) |
+Then paste a link. The menu lists **only detected apps** (press `a` to see all):
 
-The first successful run on your machine can record real paths in `hosts.json` so later installs skip rediscovery.
+```bat
+gh-install --scan
+gh-install <paste GitHub URL>
+```
 
-## GitHub URLs
+## ⚡ Install in 60 seconds
 
-Only `https://github.com/owner/repo` URLs are accepted.
+Then paste a link (interactive host menu):
 
-Optional path suffixes:
+```bat
+gh-install --dry-run https://github.com/anthropics/skills/tree/main/skills/skill-creator
+gh-install https://github.com/anthropics/skills/tree/main/skills/skill-creator
+```
 
-- `/tree/<ref>` or `/tree/<ref>/<subdir>`
-- `/blob/<ref>/<path>` (treated like a tree path for checkout)
+Or name the host up front:
 
-Other hosts (GitLab, raw zip links, etc.) are rejected.
+```bat
+gh-install --host claude https://github.com/org/your-skill-repo
+gh-install --host deepseek https://github.com/org/harness-plugin
+gh-install --host grok https://github.com/org/grok-plugin
+gh-install --host chatgpt https://github.com/org/chatgpt-plugin
+```
 
-## Command-line flags
+---
 
-| Flag | Effect |
-|------|--------|
-| `--host <name>` | Required. One of: `deepseek`, `claude`, `grok`, `chatgpt`. |
-| `--dry-run` | Print destination and file list; do not copy or merge configs. |
-| `--replace` | Overwrite an existing destination folder without prompting. |
+## 🧩 Supported hosts
 
-**Exit codes**
+| | Host | Open this app after | Installs | Typical folder on PC |
+|---|------|---------------------|----------|----------------------|
+| 🐋 | **deepseek** | DeepSeek Harness | Harness **plugins**, **skills**, profile link | `%USERPROFILE%\Documents\deepseek-harness\default-workspace\plugins` · skills: `%USERPROFILE%\.agents\skills` |
+| 🟤 | **claude** | Claude Desktop | **Skills**, plugin trees, **MCP** merge | `%USERPROFILE%\.claude\skills` · MCP: `%APPDATA%\Claude\claude_desktop_config.json` |
+| ⚡ | **grok** | Grok | **Plugins**, **skills**, **MCP** (TOML) | `%USERPROFILE%\.grok\installed-plugins` |
+| 💬 | **chatgpt** | ChatGPT desktop | **Plugins**, **skills**, **MCP** | `%APPDATA%\ChatGPT\plugins` (if app installed) |
 
-| Code | Meaning |
+Details per app: `gh-install --help-hosts`
+
+First run creates **`hosts.json`** from [`hosts.example.json`](hosts.example.json). Edit paths if your apps live elsewhere.
+
+---
+
+## 🔗 Paste GitHub links
+
+- Only **`https://github.com/owner/repo`**
+- Optional: `/tree/<ref>`, `/tree/<ref>/<subdir>`, `/blob/<ref>/<path>`
+- **Several URLs** in one command install in order
+- GitLab, zip links, and other hosts are **rejected**
+
+---
+
+## 🎛️ Flags & exit codes
+
+| Flag | What it does |
+|------|----------------|
+| `--host <name>` | Target app (`deepseek`, `claude`, `grok`, `chatgpt`). Optional on an interactive terminal—shows a menu. |
+| `--dry-run` | List destination + files; no writes |
+| `--replace` | Overwrite existing folder without asking |
+| `--where` | Print install folders for every host |
+| `--scan` | Detect installed desktop apps; update `hosts.json` (local only, **no tokens**) |
+| `--help-hosts` | Per-host install types and restart hints |
+
+| Exit | Meaning |
 |------|---------|
-| `0` | Success (or dry-run completed). |
-| `1` | Error (bad URL, missing tool, install failure). |
-| `2` | Destination already exists and `--replace` was not set (non-interactive). |
+| `0` | OK (including dry-run) |
+| `1` | Bad URL, missing git/python, install error |
+| `2` | Destination exists; use `--replace` in scripts |
 
-If the destination folder already exists and stdin is a TTY, the tool asks before replacing. In scripts, pass `--replace`.
+If a folder already exists and you are at a real terminal, the tool asks before replacing.
 
-## How detection works
+**Scripts / CI:** always pass `--host` and use `--replace` when overwriting.
 
-The installer **does not** send repository source to a language model. After a shallow `git clone`, it looks only at **manifest file names**:
+---
 
-- `SKILL.md` → skill layout for the host’s skills directory
-- `.cursor-plugin/plugin.json` or `plugin.json` → plugin layout
-- `mcp.json` → MCP server entries
+## ❓ FAQ
 
-File bytes are copied as-is except for **MCP config**: `mcp.json` is read to **merge** new servers into the host’s existing MCP config (JSON for Claude/ChatGPT, TOML tables for Grok). Existing servers are not removed.
+**How do I install a DeepSeek harness plugin from GitHub?**  
+Clone gh-install, run `setup.cmd`, then `gh-install --host deepseek https://github.com/owner/repo`.
 
-`.git` is never copied to the destination.
+**How do I add a Claude Desktop skill from a GitHub repo?**  
+`gh-install --host claude https://github.com/owner/repo/tree/main/skills/my-skill`
 
-## `hosts.json`
+**Can I avoid pasting repos into ChatGPT and paying token costs?**  
+Yes—this tool never sends repo source to an LLM. It only clones with git and copies files.
 
-- **Committed template:** `hosts.example.json` (portable `%USERPROFILE%` / `%APPDATA%` placeholders).
-- **Local overrides:** `hosts.json` (gitignored). Created on first run; you can edit paths and the `why` notes.
+**Where do files land on my PC?**  
+`gh-install --where` (paths come from `hosts.json`).
 
-## Requirements
+**Does this work on Mac or Linux?**  
+Yes: use `setup.sh` and `python3 gh-install.py`. Paths are chosen from [`hosts.example.json`](hosts.example.json) for `windows`, `darwin`, or `linux`.
 
-- **Python 3** (stdlib only; no pip packages required)
-- **git** (`git clone --depth 1`)
+**Can it install into Chrome or a browser chat?**  
+No. This targets **desktop app folders** only, not browser extensions.
 
-## License
+**ChatGPT host does nothing?**  
+Install the ChatGPT **desktop** app first, or edit `hosts.json` to match your layout.
+
+More: [docs/INSTALL.md](docs/INSTALL.md) · [Token verification](docs/VERIFY.md)
+
+---
+
+## 🔬 How it works
+
+1. **`git clone --depth 1`** into a temp folder  
+2. Detect layout from **file names only** (`SKILL.md`, `plugin.json`, `.cursor-plugin/plugin.json`, `mcp.json`, DeepSeek `cordis.patch.yml`)  
+3. **Copy** bytes as-is (no summarizing, no model)  
+4. **MCP:** merge new servers into existing JSON/TOML configs—existing servers stay  
+
+`.git` is never copied to your app folders.
+
+---
+
+## 📦 Requirements
+
+- **Windows** (cmd / PowerShell)
+- **Python 3** (stdlib only)
+- **git** on PATH
+
+---
+
+## 📄 License
 
 MIT — see [LICENSE](LICENSE).

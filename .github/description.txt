@@ -1,0 +1,1 @@
+Install GitHub plugins, skills, and MCP into Claude Desktop, Grok, DeepSeek harness, and ChatGPT—no AI tokens, just paste a link.
