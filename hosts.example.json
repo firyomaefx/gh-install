@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "hosts": {
+    "deepseek": {
+      "found": false,
+      "plugins": "%USERPROFILE%\\Documents\\deepseek-harness\\default-workspace\\plugins",
+      "skills": "%USERPROFILE%\\.agents\\skills",
+      "profile_package": "%USERPROFILE%\\.dsh\\profiles\\desktop\\package.json",
+      "marker": "cordis.patch.yml",
+      "why": "Edit after DeepSeek Harness is installed. Plugins usually live under Documents\\deepseek-harness\\default-workspace\\plugins."
+    },
+    "claude": {
+      "found": false,
+      "plugins": "%USERPROFILE%\\.claude\\plugins\\local",
+      "skills": "%USERPROFILE%\\.claude\\skills",
+      "mcp_config": "%APPDATA%\\Claude\\claude_desktop_config.json",
+      "mcp_format": "json",
+      "why": "Claude Desktop: skills in .claude\\skills, MCP in claude_desktop_config.json."
+    },
+    "grok": {
+      "found": false,
+      "plugins": "%USERPROFILE%\\.grok\\installed-plugins",
+      "skills": "%USERPROFILE%\\.grok\\skills",
+      "mcp_config": "%USERPROFILE%\\.grok\\config.toml",
+      "mcp_format": "toml",
+      "why": "Grok: plugins and skills under .grok; MCP in config.toml."
+    },
+    "chatgpt": {
+      "found": false,
+      "plugins": "%APPDATA%\\ChatGPT\\plugins",
+      "skills": "%APPDATA%\\ChatGPT\\skills",
+      "mcp_config": "%APPDATA%\\ChatGPT\\mcp_config.json",
+      "mcp_format": "json",
+      "why": "ChatGPT desktop defaults under %APPDATA%\\ChatGPT (adjust if your build differs)."
+    }
+  }
+}
