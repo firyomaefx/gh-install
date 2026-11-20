@@ -23,85 +23,118 @@
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
-    <div class="wrap">
-      <header>
-        <span class="badge">easygithubinstall</span>
-        <h1>Paste a GitHub link</h1>
-        <p class="lead">Install plugins, skills, and MCP servers on your <strong>desktop</strong> AI apps—without burning tokens in chat.</p>
-      </header>
+  <div id="toast" class="toast hidden" role="status" aria-live="polite">Copied</div>
 
-      <section class="card hero-steps" aria-label="How it works">
-        <div class="hero-step">
-          <span class="num" aria-hidden="true">1</span>
-          <div>Paste your public GitHub URL here (iPhone or Android).</div>
+  <div class="wrap">
+    <header class="site-header">
+      <span class="badge">easygithubinstall</span>
+      <h1>Paste a GitHub link</h1>
+      <p class="lead">
+        Install plugins, skills, and MCP on <strong>desktop</strong> AI apps (Claude, Grok, DeepSeek, ChatGPT)—not inside the phone apps.
+      </p>
+    </header>
+
+    <div id="device-banner" class="device-banner hidden" role="status"></div>
+
+    <form id="paste-form" class="panel panel--primary">
+      <label for="repo-url">GitHub URL</label>
+      <input
+        id="repo-url"
+        name="url"
+        type="url"
+        inputmode="url"
+        autocomplete="off"
+        autocapitalize="off"
+        spellcheck="false"
+        placeholder="https://github.com/owner/repo"
+        required
+      />
+      <p id="form-error" class="error" role="alert"></p>
+      <button type="submit" class="primary primary--block" id="validate-btn">Validate &amp; continue</button>
+      <button type="button" class="ghost" id="paste-clipboard">Paste from clipboard</button>
+    </form>
+
+    <section id="first-setup" class="panel panel--setup">
+      <div class="setup-card">
+        <span class="setup-card__icon" aria-hidden="true">🛠</span>
+        <div class="setup-card__body">
+          <strong>Never used gh-install?</strong>
+          <p class="setup-card__hint">One-time setup on your computer, then paste any GitHub link.</p>
+          <code class="setup-card__cmd mono">git clone https://github.com/firyomaefx/gh-install.git</code>
+          <a href="/docs.html" class="setup-card__link">Full setup guide →</a>
         </div>
-        <div class="hero-step">
-          <span class="num" aria-hidden="true">2</span>
-          <div>Scan the QR or copy the command for your computer.</div>
-        </div>
-        <div class="hero-step">
-          <span class="num" aria-hidden="true">3</span>
-          <div>Run <code>gh-install</code> in a terminal—git clone, no LLM.</div>
-        </div>
+      </div>
+    </section>
+
+    <section id="result" class="panel hidden" aria-live="polite">
+      <p class="result-label">Repository</p>
+      <p class="result-repo"><strong id="repo-name"></strong></p>
+      <p id="repo-desc" class="lead hidden"></p>
+
+      <div id="hero-actions" class="hero-actions">
+        <a id="open-go" class="hero-action" href="/go">
+          <span class="hero-action__icon" aria-hidden="true">▣</span>
+          <span class="hero-action__text">QR handoff</span>
+        </a>
+        <button type="button" class="hero-action" id="copy-cmd">
+          <span class="hero-action__icon" aria-hidden="true">⎘</span>
+          <span class="hero-action__text">Copy command</span>
+        </button>
+        <button type="button" class="hero-action" id="share-handoff">
+          <span class="hero-action__icon" aria-hidden="true">↗</span>
+          <span class="hero-action__text">Share</span>
+        </button>
+      </div>
+
+      <p class="mono-label">Install command</p>
+      <pre id="install-cmd" class="mono"></pre>
+
+      <section id="desktop-terminal" class="desktop-terminal hidden">
+        <h2 class="section-title">Run in Terminal or PowerShell</h2>
+        <ol id="desktop-steps" class="numbered-steps"></ol>
       </section>
+    </section>
 
-      <form id="paste-form" class="card">
-        <label for="repo-url">GitHub URL</label>
-        <input
-          id="repo-url"
-          name="url"
-          type="url"
-          inputmode="url"
-          autocomplete="off"
-          autocapitalize="off"
-          spellcheck="false"
-          placeholder="https://github.com/owner/repo"
-          required
-        />
-        <p class="device-pill" id="device-label"></p>
-        <p id="form-error" class="error" role="alert"></p>
-        <div class="row">
-          <button type="button" class="secondary" id="paste-clipboard">Paste from clipboard</button>
-          <button type="submit" class="primary">Validate &amp; get command</button>
-        </div>
-      </form>
+    <details class="how-it-works">
+      <summary>How this works</summary>
+      <ul class="flow-icons" aria-label="Three steps">
+        <li>
+          <span class="flow-icons__icon" aria-hidden="true">🔗</span>
+          <span>Paste URL</span>
+        </li>
+        <li>
+          <span class="flow-icons__icon" aria-hidden="true">✓</span>
+          <span>Validate</span>
+        </li>
+        <li>
+          <span class="flow-icons__icon" aria-hidden="true">💻</span>
+          <span>Install on PC/Mac</span>
+        </li>
+      </ul>
+      <div class="how-detail">
+        <p><strong>Phone or tablet (iOS/Android):</strong> paste → validate → QR, copy, or share. Installation cannot run inside Claude or Grok on the device.</p>
+        <p><strong>PC, Mac, or Linux:</strong> same page shows terminal commands after you validate. One-time <code>gh-install</code> setup from GitHub, then paste or run the command.</p>
+      </div>
+    </details>
 
-      <section id="result" class="card hidden" aria-live="polite">
-        <p><strong id="repo-name"></strong></p>
-        <p id="repo-desc" class="lead hidden"></p>
-        <p>Install command:</p>
-        <pre id="install-cmd" class="mono"></pre>
-        <div class="row">
-          <button type="button" class="secondary" id="copy-cmd">Copy command</button>
-          <button type="button" class="secondary" id="copy-url">Copy URL</button>
-          <a id="open-go" class="btn primary" href="/go">Open handoff (QR)</a>
-        </div>
-      </section>
-
-      <section id="mobile-handoff" class="card steps">
-        <h2 style="margin-top: 0; font-size: 1.1rem">On your phone</h2>
-        <p>Use <strong>Open handoff</strong> for a big QR code your computer can scan, or tap <strong>Share</strong> to send yourself the command.</p>
-        <button type="button" class="primary" id="share-handoff" style="width: 100%">Share handoff</button>
-      </section>
-
-      <section id="desktop-hint" class="card steps hidden">
-        <h2 style="margin-top: 0; font-size: 1.1rem">One-time setup</h2>
-        <ol>
-          <li><a href="https://github.com/firyomaefx/gh-install">Clone gh-install</a></li>
-          <li>Run <code>setup.cmd</code> or <code>./setup.sh</code></li>
-          <li>Run <code>gh-install --scan</code></li>
-        </ol>
-      </section>
-
-      <nav class="footer-nav">
-        <a href="/docs.html">Docs</a>
-        <a href="/hosts.html">Hosts</a>
-        <a href="https://github.com/firyomaefx/gh-install">gh-install on GitHub</a>
-      </nav>
-    </div>
-    <script type="module">
-      import { setupPastePage } from "/app.js";
-      setupPastePage(document);
-    </script>
+    <nav class="footer-chips" aria-label="Links">
+      <a class="footer-chip" href="/docs.html">
+        <span class="footer-chip__icon" aria-hidden="true">📄</span>
+        <span>Docs</span>
+      </a>
+      <a class="footer-chip" href="/hosts.html">
+        <span class="footer-chip__icon" aria-hidden="true">🖥</span>
+        <span>Hosts</span>
+      </a>
+      <a class="footer-chip" href="https://github.com/firyomaefx/gh-install">
+        <span class="footer-chip__icon" aria-hidden="true">⌾</span>
+        <span>GitHub</span>
+      </a>
+    </nav>
+  </div>
+  <script type="module">
+    import { setupPastePage } from "/app.js";
+    setupPastePage(document);
+  </script>
   </body>
 </html>

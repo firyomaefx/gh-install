@@ -36,10 +36,10 @@ export function detectDevice() {
   const ua = navigator.userAgent || "";
   if (/iPhone|iPad|iPod/i.test(ua)) return { kind: "ios", label: "iOS" };
   if (/Android/i.test(ua)) return { kind: "android", label: "Android" };
-  if (/Macintosh|Mac OS X/i.test(ua)) return { kind: "desktop", label: "Mac" };
-  if (/Windows/i.test(ua)) return { kind: "desktop", label: "Windows" };
-  if (/Linux/i.test(ua)) return { kind: "desktop", label: "Linux" };
-  return { kind: "unknown", label: "your device" };
+  if (/Macintosh|Mac OS X/i.test(ua)) return { kind: "desktop", platform: "mac", label: "Mac" };
+  if (/Windows/i.test(ua)) return { kind: "desktop", platform: "windows", label: "Windows" };
+  if (/Linux/i.test(ua)) return { kind: "desktop", platform: "linux", label: "Linux" };
+  return { kind: "unknown", platform: "windows", label: "your device" };
 }
 
 export function isMobileDevice(kind) {
@@ -63,6 +63,15 @@ export async function copyText(text) {
   return ok;
 }
 
+export function showToast(root, message = "Copied") {
+  const toast = root.querySelector("#toast") || document.getElementById("toast");
+  if (!toast) return;
+  toast.textContent = message;
+  toast.classList.remove("hidden");
+  clearTimeout(showToast._timer);
+  showToast._timer = setTimeout(() => toast.classList.add("hidden"), 2000);
+}
+
 export async function shareHandoff(payload) {
   if (!navigator.share) return false;
   try {
@@ -83,25 +92,64 @@ export function handoffPageUrl(repoUrl, origin) {
   return u.toString();
 }
 
+function desktopSetupLines(platform, installCommand) {
+  const cmd =
+    platform === "windows" ? installCommand : installCommand.replace(/^gh-install/, "python3 gh-install.py");
+  const base = {
+    windows: [
+      "git clone https://github.com/firyomaefx/gh-install.git",
+      "cd gh-install",
+      "setup.cmd",
+      "gh-install --scan",
+      cmd,
+    ],
+    mac: [
+      "git clone https://github.com/firyomaefx/gh-install.git",
+      "cd gh-install",
+      "chmod +x setup.sh && ./setup.sh",
+      "python3 gh-install.py --scan",
+      cmd,
+    ],
+    linux: [
+      "git clone https://github.com/firyomaefx/gh-install.git",
+      "cd gh-install",
+      "chmod +x setup.sh && ./setup.sh",
+      "python3 gh-install.py --scan",
+      cmd,
+    ],
+  };
+  return base[platform] || base.windows;
+}
+
+function renderDesktopSteps(root, platform, installCommand) {
+  const stepsEl = root.querySelector("#desktop-steps");
+  if (!stepsEl) return;
+  const lines = desktopSetupLines(platform, installCommand);
+  stepsEl.innerHTML = lines
+    .map((line) => `<li><code class="mono">${escapeHtml(line)}</code></li>`)
+    .join("");
+}
+
 export function setupPastePage(root) {
   const form = root.querySelector("#paste-form");
   const input = root.querySelector("#repo-url");
   const pasteBtn = root.querySelector("#paste-clipboard");
   const errEl = root.querySelector("#form-error");
   const resultEl = root.querySelector("#result");
-  const deviceEl = root.querySelector("#device-label");
-  const mobileCard = root.querySelector("#mobile-handoff");
-  const desktopCard = root.querySelector("#desktop-hint");
+  const bannerEl = root.querySelector("#device-banner");
+  const desktopTerminal = root.querySelector("#desktop-terminal");
 
   const device = detectDevice();
-  if (deviceEl) {
-    deviceEl.textContent =
-      isMobileDevice(device.kind) ?
-        `You're on ${device.label} — finish the install on your computer.`
-      : `You're on ${device.label} — you can run the command in a terminal.`;
+  if (bannerEl) {
+    bannerEl.classList.remove("hidden");
+    if (isMobileDevice(device.kind)) {
+      bannerEl.className = "device-banner device-banner--mobile";
+      bannerEl.textContent = "Step 1 of 2 on this phone → Step 2 on your computer";
+    } else {
+      bannerEl.className = "device-banner device-banner--desktop";
+      bannerEl.textContent = "Run the commands below in Terminal or PowerShell";
+    }
   }
-  if (mobileCard) mobileCard.classList.toggle("hidden", !isMobileDevice(device.kind));
-  if (desktopCard) desktopCard.classList.toggle("hidden", isMobileDevice(device.kind));
 
   pasteBtn?.addEventListener("click", async () => {
     errEl.textContent = "";
@@ -134,8 +182,8 @@ export function setupPastePage(root) {
     }
 
     const repoName = root.querySelector("#repo-name");
-  const cmdEl = root.querySelector("#install-cmd");
-  const openGo = root.querySelector("#open-go");
+    const cmdEl = root.querySelector("#install-cmd");
+    const openGo = root.querySelector("#open-go");
 
     if (repoName) repoName.textContent = `${data.owner}/${data.repo}`;
     if (cmdEl) cmdEl.textContent = data.installCommand;
@@ -143,7 +191,15 @@ export function setupPastePage(root) {
       openGo.href = handoffPageUrl(data.url, window.location.origin);
     }
 
+    if (!isMobileDevice(device.kind) && desktopTerminal) {
+      desktopTerminal.classList.remove("hidden");
+      renderDesktopSteps(root, device.platform || "windows", data.installCommand);
+    } else if (desktopTerminal) {
+      desktopTerminal.classList.add("hidden");
+    }
+
     resultEl?.classList.remove("hidden");
+    resultEl?.scrollIntoView({ behavior: "smooth", block: "nearest" });
 
     try {
       const meta = await fetch(
@@ -154,6 +210,8 @@ export function setupPastePage(root) {
       if (descEl && repoInfo.ok && repoInfo.description) {
         descEl.textContent = repoInfo.description;
         descEl.classList.remove("hidden");
+      } else if (descEl) {
+        descEl.classList.add("hidden");
       }
     } catch {
       /* optional */
@@ -162,12 +220,7 @@ export function setupPastePage(root) {
 
   root.querySelector("#copy-cmd")?.addEventListener("click", async () => {
     const cmd = root.querySelector("#install-cmd")?.textContent;
-    if (cmd) await copyText(cmd);
-  });
-
-  root.querySelector("#copy-url")?.addEventListener("click", async () => {
-    const url = input.value.trim();
-    if (url) await copyText(url);
+    if (cmd && (await copyText(cmd))) showToast(root);
   });
 
   root.querySelector("#share-handoff")?.addEventListener("click", async () => {
@@ -179,7 +232,8 @@ export function setupPastePage(root) {
       url: go,
     });
     if (!shared) {
-      errEl.textContent = "Share not available — use Copy instead.";
+      if (cmd && (await copyText(`${cmd}\n${go}`))) showToast(root, "Copied link & command");
+      else errEl.textContent = "Share not available — use Copy command.";
     }
   });
 }
@@ -209,31 +263,13 @@ export function setupGoPage(root) {
   const qrImg = root.querySelector("#qr-image");
   if (qrImg) {
     qrImg.src = `/api/qr?data=${encodeURIComponent(handoffUrl)}`;
-    qrImg.alt = `QR code for handoff page`;
+    qrImg.alt = "QR code — scan with phone or open this page on your PC";
   }
 
   const setupByPlatform = {
-    windows: [
-      "git clone https://github.com/firyomaefx/gh-install.git",
-      "cd gh-install",
-      "setup.cmd",
-      "gh-install --scan",
-      data.installCommand,
-    ],
-    mac: [
-      "git clone https://github.com/firyomaefx/gh-install.git",
-      "cd gh-install",
-      "chmod +x setup.sh && ./setup.sh",
-      "python3 gh-install.py --scan",
-      data.installCommand.replace(/^gh-install/, "python3 gh-install.py"),
-    ],
-    linux: [
-      "git clone https://github.com/firyomaefx/gh-install.git",
-      "cd gh-install",
-      "chmod +x setup.sh && ./setup.sh",
-      "python3 gh-install.py --scan",
-      data.installCommand.replace(/^gh-install/, "python3 gh-install.py"),
-    ],
+    windows: desktopSetupLines("windows", data.installCommand),
+    mac: desktopSetupLines("mac", data.installCommand),
+    linux: desktopSetupLines("linux", data.installCommand),
   };
 
   const stepsEl = root.querySelector("#platform-steps");
@@ -254,8 +290,12 @@ export function setupGoPage(root) {
   });
   renderSteps("windows");
 
-  root.querySelector("#copy-cmd")?.addEventListener("click", () => copyText(data.installCommand));
-  root.querySelector("#copy-url")?.addEventListener("click", () => copyText(data.url));
+  root.querySelector("#copy-cmd")?.addEventListener("click", async () => {
+    if (await copyText(data.installCommand)) showToast(root);
+  });
+  root.querySelector("#copy-url")?.addEventListener("click", async () => {
+    if (await copyText(data.url)) showToast(root);
+  });
 }
 
 function escapeHtml(s) {
