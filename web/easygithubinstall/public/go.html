@@ -4,48 +4,57 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#0969da" />
-    <title>Hand off to desktop — Easy GitHub Install</title>
+    <title>Step 2 — on your computer · Easy GitHub Install</title>
     <link rel="icon" href="/icon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
+  <div id="toast" class="toast hidden" role="status" aria-live="polite">Copied</div>
+
     <div class="wrap">
-      <header>
+      <header class="site-header">
         <a href="/">← Back</a>
-        <h1>Hand off to your computer</h1>
-        <p class="lead">Scan this QR on another device, or copy the install command.</p>
+        <h1>Step 2 — on your computer</h1>
+        <p class="lead">Finish the install in Terminal (Mac/Linux) or PowerShell (Windows). Your phone cannot install into desktop AI apps.</p>
       </header>
 
       <p id="go-error" class="error" role="alert"></p>
 
       <section id="go-content" class="hidden">
-        <div class="card qr-wrap">
+        <div class="panel qr-wrap">
           <img id="qr-image" width="280" height="280" alt="" />
+          <p class="qr-caption">Scan with your phone to save this page, or open this URL on your PC.</p>
         </div>
 
-        <div class="card">
-          <p>Install command:</p>
+        <ol class="go-steps panel">
+          <li>Open <strong>Terminal</strong> or <strong>PowerShell</strong> on your computer (not inside a chat app).</li>
+          <li>If this is your first time, clone <a href="https://github.com/firyomaefx/gh-install">gh-install</a> and run setup once—see tabs below.</li>
+          <li>Copy and run the install command for the repo you pasted.</li>
+        </ol>
+
+        <div class="panel">
+          <p class="mono-label">Install command</p>
           <pre id="install-cmd" class="mono"></pre>
           <div class="row">
-            <button type="button" class="primary" id="copy-cmd">Copy command</button>
+            <button type="button" class="primary" id="copy-cmd" style="flex: 1">Copy command</button>
             <button type="button" class="secondary" id="copy-url">Copy GitHub URL</button>
           </div>
         </div>
 
-        <section class="card steps">
-          <h2 style="margin-top: 0; font-size: 1.1rem">Setup steps</h2>
+        <section class="panel">
+          <h2 class="section-title">First-time setup commands</h2>
           <div class="tabs" role="tablist">
             <button type="button" class="tab active" data-platform="windows" role="tab">Windows</button>
             <button type="button" class="tab" data-platform="mac" role="tab">Mac</button>
             <button type="button" class="tab" data-platform="linux" role="tab">Linux</button>
           </div>
-          <ol id="platform-steps"></ol>
+          <ol id="platform-steps" class="numbered-steps"></ol>
         </section>
       </section>
 
-      <nav class="footer-nav">
-        <a href="/">Home</a>
-        <a href="/docs.html">Docs</a>
+      <nav class="footer-chips" aria-label="Links">
+        <a class="footer-chip" href="/"><span class="footer-chip__icon" aria-hidden="true">⌂</span><span>Home</span></a>
+        <a class="footer-chip" href="/docs.html"><span class="footer-chip__icon" aria-hidden="true">📄</span><span>Docs</span></a>
       </nav>
     </div>
     <script type="module">
